@@ -1,8 +1,8 @@
-body {
+#body {
 background: linear-gradient(354deg, #943A6F -37.22%, #FFFFFF 71.57%);
 }
 
-h1 {
+#h1 {
     position: absolute;
     font-size: 3rem;
     font-weight: 700;
@@ -14,7 +14,7 @@ h1 {
     transform: translateX(-100px);
 }
 
-p {
+#p {
     position: absolute;
     font-size: 1rem;
     margin: 0;
