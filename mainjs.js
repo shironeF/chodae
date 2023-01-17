@@ -1,51 +1,63 @@
 const listItems = document.querySelectorAll('nav .nav-item');
 const API_KEY = 'AIzaSyClso5DVSDxgLPUu3FwxdmhHHZEyu1hoj4';
-let map, map2, map3;
-let lati;
-let longi;
-let coordinates;
-let loc_title;
-let loc_address;
+let map, map2;
+let lati, longi, loc_title, loc_addressHold = "", loc_address, geocoder, titleDisplay, placeId, Title;
+let satbtn, input, autocomplete, intervalSearch;
 let windowOpen = false;
-let butt = document.getElementById("butt");
-let marker = document.getElementById("marker");
-let insta = document.querySelectorAll('[jstcache="4"]');
-let tester = document.getElementsByClassName("title");
+let partTitle, partAddress;
+let panTo = document.getElementById("pan-to");
+const mapMarker = document.getElementById("mapMarker");
+const addtotravellist = document.getElementById("addtotravellist");
+let Explore = document.getElementById('Explore');
+let mainList = document.getElementById('mainList');
 let close = document.querySelectorAll('[class="gm-ui-hover-effect"]');
-let satbtn;
-let input;
-let autocomplete;
-let infowindow;
-let infowindowContent;
+let googleLabel;
+let googleLabelStatus = true;
 let template = document.createElement('btn');
-template.innerHTML =
-  `
-    <div class="gm-style-mtc mapAdds">
-      <input id="searchInput" type="search" class="searchBar" placeholder="Search"/>
-    </div>
-  `
-const Explore = document.getElementById('Explore');
-const expSect = document.getElementById('exploreSection');
-let intervalSearch;
+let userMarkerLocation = [];
+let userMarkerContent = {};
+let markerContent = '';
+let latlng;
+let currentMarker;
+let service;
+let placePhotos = [];
+let carouselItemContainer = document.getElementById('items-carousel');
+let addressContainer = document.getElementById('addressContainer');
+let locationTitle = document.getElementById('locationTitle');
+const starSection = document.getElementById('starSection');
+const MyList = document.getElementById('MyList');
+let global_latlng;
+let placeRating;
+let placeReviews;
+let transitTitle, transitAddress;
+let userMarkers = {};
+let currentPlace;
+let rating = 0;
+let reviews = [];
+let bucketList = {};
+let addbucket = false;
+let locExisting = false;
+
+
+
+
 
 function addSearch() {
-  template = document.createElement('btn');
-  template.innerHTML =
-    `
-    <div class="gm-style-mtc mapAdds">
-      <input id="searchInput" type="search" class="searchBar" placeholder="Search"/>
-    </div>
-  `
+  template = document.createElement('div');
+  template.classList.add("gm-style-mtc", "d-flex", "d-flex");
+  template.innerHTML = `<input id="searchInput" type="search" class="searchBar" placeholder="Search"/>`;
   satbtn = document.querySelectorAll('[role="menubar"]');
-  satbtn[0].insertAdjacentElement('beforeend', template);
-    const opts = {
-      fields: ["formatted_address", "geometry", "name"],
-      strictBounds: false,
-      types: ["establishment"],
-    };
-    input = document.getElementById("searchInput");
-    autocomplete = new google.maps.places.Autocomplete(input, opts);
-    searchPan();
+  if (satbtn[0]) {
+    satbtn[0].insertAdjacentElement('beforeend', template);
+  }
+  const opts = {
+    fields: ["formatted_address", "geometry", "name"],
+    strictBounds: false,
+    types: ["establishment"]
+  };
+  input = document.getElementById("searchInput");
+  autocomplete = new google.maps.places.Autocomplete(input, opts);
+  searchPan();
 }
 
 
@@ -63,320 +75,590 @@ listItems.forEach(listItem => {
         break;
       case 'Explore':
         document.getElementById('exploreSection').scrollIntoView();
+        if (document.getElementById('searchInput') ? '' : addSearch());
         intervalSearch = setInterval(function () {
-          if (document.getElementById('searchInput')) {
-          } else {
-            addSearch();
-          }
+          if (document.getElementById('searchInput') ? '' : addSearch());
         }, 2000);
         break;
-      case 'Budget':
-        document.getElementById('budgetSection').scrollIntoView();
-        clearInterval(intervalSearch);
-        break;
       default:
-        console.log('Search Empty');
+        intervalSearch = 2000;
     }
   });
 });
 
-marker.addEventListener("click", function () {
-  if (windowOpen === true) {
-    markThis(coordinates, map2);
+
+function deleteMarker() {
+  currentMarker.setMap(null);
+  //remove marker from array
+  delete userMarkers[`${currentMarker.position.lat()}, ${currentMarker.position.lng()}`];
+  try {
+    delete bucketList[`${currentMarker.position.lat()}, ${currentMarker.position.lng()}`];
+  } catch {
+    console.log("Marker does not exist on the list");
+  }
+}
+
+
+
+
+
+function checkDuplicate(userMarkers, map2, addbucket) {
+
+  let latlngKey = global_latlng.lat + ", " + global_latlng.lng;
+  if (addbucket) {
+    for (let key in bucketList) {
+      if (latlngKey == key) {
+        locExisting = true;
+        console.log("existing in bucketlist");
+      }
+    }
   } else {
-    alert("None selected, can't add marker here.");
+    tobucket = false;
+    for (let key in userMarkers) {
+      if (latlngKey == key) {
+        locExisting = true;
+        console.log("existing in marker");
+
+      }
+    }
+  }
+}
+
+
+addtotravellist.addEventListener("click", function () {
+  tobucket = true;
+  locExisting = false;
+  checkDuplicate(userMarkers, map2, true);
+  if (!locExisting) {
+    markThis(latlng, map2, true);
+    mapMarker.classList.remove("btn-primary");
+    mapMarker.classList.add("btn-danger");
+    mapMarker.disabled = false;
+    mapMarker.innerHTML = "Remove";
   }
 });
 
-// fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=ChIJ1RqnWMdZ-TIRSA9zlRDLA-I&fields=name,formatted_address,formatted_phone_number,rating&key=AIzaSyClso5DVSDxgLPUu3FwxdmhHHZEyu1hoj4`)
-// .then(response => response.json())
-// .then(data => {
-//   // Do something with the place details
-//   console.log(data);
-// });
+// marker btn test
+mapMarker.addEventListener("click", function () {
+  if (mapMarker.innerHTML === "Remove") {
+    deleteMarker();
+    closePreviousWindow();
+    mapMarker.classList.remove("btn-danger");
+    mapMarker.disabled = true;
+    addtotravellist.disabled = true;
+    addtotravellist.classList.remove("btn-primary");
+    mapMarker.innerHTML = "Mark";
+  } else {
 
-function markThis(latlng, map2) {
-  const marker = new google.maps.Marker({
+    locExisting = false;
+    checkDuplicate(userMarkers, map2, false);
+    if (document.querySelectorAll('[class="gm-ui-hover-effect"]')[0]) {
+      if (locExisting === false) {
+
+        markThis(global_latlng, map2, tobucket);
+        mapMarker.classList.remove("btn-primary");
+        mapMarker.classList.add("btn-danger");
+        mapMarker.disabled = false;
+        mapMarker.innerHTML = "Remove";
+      } else {
+        console.log("Location already marked.");
+      }
+    } else {
+      console.log("None selected, can't add marker here.");
+    }
+    locExisting = false;
+  }
+});
+
+
+
+
+
+function markThis(latlng, map2, tobucket) {
+
+  let marker = new google.maps.Marker({
     position: latlng,
-    map: map2,
+    map: map2
+  });
+
+  currentMarker = marker;
+  userMarkerContent[`${latlng.lat}, ${latlng.lng}`] = loc_title + loc_address;
+  markerContent = '';
+  userMarkerLocation.push(global_latlng);
+  const key = 'lat';
+  const unique = [...new Map(userMarkerLocation.map(item =>
+    [item[key], item])).values()];
+  userMarkerLocation = unique;
+
+  let tempData = {};
+
+  tempData['COORDINATES'] = latlng;
+  tempData['ID'] = placeId;
+  tempData['TITLE'] = loc_title;
+  tempData['ADDRESS'] = loc_address; ``
+  tempData['PHOTOS'] = placePhotos;
+  tempData['RATING'] = rating;
+  tempData['REVIEWS'] = reviews;
+
+  userMarkers[`${latlng.lat}, ${latlng.lng}`] = tempData;
+
+  if (tobucket) {
+    bucketList[`${latlng.lat}, ${latlng.lng}`] = tempData;
+  }
+
+  placePhotos = [];
+
+
+  marker.addListener('click', function () {
+    closePreviousWindow();
+    map2.panTo(latlng);
+    let lat = marker.position.lat();
+    let lng = marker.position.lng();
+    latlng = { lat: lat, lng: lng };
+    global_latlng = latlng;
+    let markerSelected = userMarkers[`${latlng.lat}, ${latlng.lng}`];
+    //  set up for marker
+    locationTitle.innerHTML = markerSelected.TITLE;
+    // loop placeAddressArray
+    let infoWindow = new google.maps.InfoWindow({
+      content: markerSelected.TITLE
+    });
+
+    infoWindow.open(map2, marker);
+    currentMarker = marker;
+
+    changeWithMarkerContent(markerSelected);
+    if (markerSelected.PHOTOS != 0) {
+
+      changePhotos(markerSelected.PHOTOS);
+    } else {
+      carouselItem = `<div class="carousel-item rounded-2 active">
+      <div class="img-fit rounded-2"
+        style="background-image: url(icons/nophotos.svg);">
+      </div>
+    </div>`
+      carouselItemContainer.innerHTML = carouselItem;
+    }
+    setStarSection(markerSelected.RATING, markerSelected.REVIEWS);
+
+    mapMarker.classList.remove("btn-primary");
+    mapMarker.classList.add("btn-danger");
+    mapMarker.disabled = false;
+    mapMarker.innerHTML = "Remove";
+
+    addtotravellist.classList.add("btn-primary");
+    addtotravellist.disabled = false;
+
   });
 }
 
-function getPlaceData() {
 
-  insta = document.querySelectorAll('[jstcache="4"]');
-  tester = document.getElementsByClassName("title");
+function getPlaceData(geocodeData) {
+  Title = '';
+  let titleNode = document.createElement('h3');
+  titleNode.classList.add("fw-bold");
+  partAddress = document.querySelectorAll('[jstcache="4"]');
+  partTitle = document.getElementsByClassName("title");
+  googleLabel = document.querySelectorAll('[jstcache="6"]');
+
+  //full address no id
+  let placeAddressArray = geocodeData.formatted_address.split(", ");
+
+  //remove reference id if existing
+  if (placeAddressArray[0].includes('+')) {
+    placeAddressArray.splice(0, 1);
+  }
+
+  transitTitle = document.getElementsByClassName("transit-title")
+  // check for transit window
+  if (transitTitle[1]) {
+    Title = transitTitle[1].textContent;
+  } else if (partTitle[0]) {
+    Title = partTitle[0].textContent;
+  } else {
+    // do nothing
+  }
+
+  // remove all children of addressContainer for later setting of text
+  if (Title.length != 0) {
+    while (addressContainer.children.length > 1 && addressContainer.lastChild) {
+      addressContainer.removeChild(addressContainer.lastChild);
+    }
+
+    locationTitle.innerHTML = Title;
+    markerContent = `<b>${Title}</b>`;
+
+    if (markerContent != '') {
+      for (let i = 0; i < partAddress.length; i++) {
+        let tempCheck = partAddress[i].textContent;
+        if (!tempCheck.includes('+') && tempCheck != undefined) {
+          let textNode = document.createElement('h5');
+          textNode.setAttribute("id", "address" + i);
+          textNode.innerHTML = tempCheck;
+          document.getElementById("addressContainer").appendChild(textNode);
+          loc_addressHold += "|" + tempCheck;
+        }
+      }
+
+      let hr = document.createElement('hr');
+      document.getElementById("addressContainer").appendChild(hr);
+
+    }
+    loc_address = loc_addressHold.slice(1);
+    loc_addressHold = "";
+
+  }
+  Title = "";
+  if (googleLabel[0] ? googleLabel[0].remove() : '');
+
 
   try {
-    loc_title = tester[0].textContent;
-    loc_address = `${insta[1].textContent} ${insta[2].textContent} ${insta[3].textContent}`;
+    loc_title = partTitle[0].textContent;
   } catch (e) {
     loc_title = "None selected";
-    loc_address = "None selected";
+    loc_addressHold = "None selected";
     if (e instanceof TypeError) {
       windowOpen = false;
     }
   }
 
-  if (loc_title != "None selected") {
-
-    windowOpen = true;
-  } else {
-
-  }
+  if (loc_title != "None selected" ? windowOpen = true : '');
+  markerContent = "";
 }
 
 
-function initMap() {
-try{
+function setStarSection(stars, rev) {
 
-  const marked = document.getElementById("marked");
+  let starLinePref = `<h5 id="starNumber" class="mt-1 me-2">${stars}</h5>`;
+  let starLineContent = "";
+  let fullStar = '<img src="icons\\starFull.png" alt="">';
+  let halfStar = '<img src="icons\\starHalf.png" alt="">';
+  let emptyStar = '<img src="icons\\starEmpty.png" alt="">';
 
-  // marked.addEventListener('click', function (e) {
-  //   new google.maps.Marker({
-  //     position: e.latLng,
-  //     map: map
-  //   });
-  // });
+  // amazing hahahah
+  if (stars === 0) {
+    starLinePref = `<h5 id="starNumber" class="mt-1 me-2">No Ratings</h5></h5>`;
+    starLineContent = emptyStar + emptyStar + emptyStar + emptyStar + emptyStar;
 
-
-  // Map initial location
-  let options = {
-    zoom: 10,
-    center: { lat: 7.356033977636596, lng: 125.85744918370949 },
-    draggable: false,
-    disableDefaultUI: true,
-    disableDoubleClickZoom: true,
-  }
-  let options2 = {
-    zoom: 8,
-    center: { lat: 7.356033977636596, lng: 125.85744918370949 },
-    scrollwheel: true,
-    fullscreenControl: false,
-    disableDoubleClickZoom: true
-  }
-
-  // New maps
-  map = new google.maps.Map(document.getElementById('map'), options);
-  map2 = new google.maps.Map(document.getElementById('map2'), options2);
-  map3 = new google.maps.Map(document.getElementById('map3'), options);
-
-
-  butt.addEventListener("click", function () {
-    let latLng = new google.maps.LatLng(7.177371073399362, 125.72633743286133);
-    map2.setZoom(12);
-    map2.panTo(latLng);
-  });
-
-
-  // Listen for click on map
-  google.maps.event.addListener(map2, 'click', function (event) {
-    //closing previous window
-    try {
-      winClose = document.querySelectorAll('[class="gm-ui-hover-effect"]');
-      winClose[0].click();
-    } catch (e) {
-      if (e instanceof TypeError) {
-
+  } else {
+    let iter = Math.floor(rating);
+    let cons = 1;
+    let full = iter;
+    let emptys;
+    let half;
+    if (stars % cons != 0) {
+      half = 1;
+      emptys = 4 - full;
+    } else {
+      half = 0;
+      emptys = 5 - iter;
+    }
+    for (let i = 1; i <= full; i++) {
+      starLineContent += fullStar;
+    }
+    if (half != 0) {
+      starLineContent += halfStar;
+    }
+    if (emptys != 0) {
+      for (let i = 1; i <= emptys; i++) {
+        starLineContent += emptyStar;
       }
     }
+  }
 
-    // Add marker
-    let lat = event.latLng.lat();
-    let lng = event.latLng.lng();
+  starLineContent += `<h5 id="ratingNumber" class="ms-3 mt-1">${rev.length} Reviews</h5>`;
+  starLinePref += starLineContent;
+  starSection.innerHTML = "";
+  starSection.innerHTML = starLinePref;
+}
 
-    var geocoder = new google.maps.Geocoder;
-    var latlng = { lat: lat, lng: lng };
-    geocoder.geocode({ 'location': latlng },
-      function (results, status) {
-        if (status === 'OK') {
-          if (results[0]) {
-            //scrape info window
-            getPlaceData();
 
-            coordinates = latlng;
-          } else {
-            console.log('No results found');
-          }
-        } else {
-          console.log('Geocoder failed due to: ' + status);
-        }
-      })
+function changeWithMarkerContent(markerSelected) {
+  let addressArray = markerSelected.ADDRESS.split("|");
 
-    // fetch('https://maps.googleapis.com/maps/api/place/details/json?place_id=ChIJoR4Yj95Q-TIRTPW3SK0PlnE&fields=name&key=AIzaSyClso5DVSDxgLPUu3FwxdmhHHZEyu1hoj4')
-    //   .then(response => response.json())
-    //   .then(data => {
-    //     // process the JSON data here
-    //     console.log(data);
-    //   });
+  while (addressContainer.children.length > 1 && addressContainer.lastChild) {
+    addressContainer.removeChild(addressContainer.lastChild);
+  }
 
-  });
+  for (let i = 0; i < addressArray.length; i++) {
+    let tempCheck = addressArray[i];
+    let textNode = document.createElement('h5');
+    textNode.setAttribute("id", "address" + i);
+    textNode.innerHTML = tempCheck;
+    document.getElementById("addressContainer").appendChild(textNode);
+  }
+  let hr = document.createElement('hr');
+  document.getElementById("addressContainer").appendChild(hr);
+}
 
-}catch{
+try {
+  function initMap() {
+    // Map initial location 
+    let options = {
+      zoom: 10,
+      center: { lat: 7.356033977636596, lng: 125.85744918370949 },
+      draggable: false,
+      disableDefaultUI: true,
+      disableDoubleClickZoom: true,
+    }
+    let options2 = {
+      zoom: 8,
+      center: { lat: 7.356033977636596, lng: 125.85744918370949 },
+      scrollwheel: true,
+      fullscreenControl: false,
+      disableDoubleClickZoom: true
+    }
+    // New maps
+    map = new google.maps.Map(document.getElementById('map'), options);
+    map2 = new google.maps.Map(document.getElementById('map2'), options2);
+
+    panTo.addEventListener("click", function () {
+      latlng = new google.maps.LatLng(7.177371073399362, 125.72633743286133);
+      map2.setZoom(12);
+      map2.panTo(latlng);
+    });
+
+    // for click on map
+    google.maps.event.addListener(map2, 'click', function (event) {
+
+      //for location clicks on map 
+      let lat = event.latLng.lat();
+      let lng = event.latLng.lng();
+      latlng = { lat: lat, lng: lng };
+      global_latlng = latlng;
+      geocoder = new google.maps.Geocoder;
+      mapShowLocationDetails(geocoder, latlng);
+      closePreviousWindow();
+    });
+  }
+} catch (e) {
   initMap();
 }
 
-  // map.addListener('click', function (e) {
-  //   new google.maps.Marker({
-  //     position: e.latLng,
-  //     map: map
-  //   });
-  // });
-
-  /*
-  // Add marker
-  let marker = new google.maps.Marker({
-    position:{lat:42.4668,lng:-70.9495},
-    map:map,
+function searchPan() {
+  autocomplete.bindTo("bounds", map2);
+  const marker = new google.maps.Marker({
+    map2,
+    anchorPoint: new google.maps.Point(0, -29),
   });
+  autocomplete.addListener("place_changed", () => {
+    marker.setVisible(false);
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      window.alert("No details available for input: '" + place.name + "'");
+      return;
+    }
 
-  let infoWindow = new google.maps.InfoWindow({
-    content:'<h1>Lynn MA</h1>'
+    if (place.geometry.viewport) {
+      map2.fitBounds(place.geometry.viewport);
+    } else {
+      map2.setCenter(place.geometry.location);
+      map2.setZoom(12);
+    }
+    marker.setPosition(place.geometry.location);
+    marker.setVisible(true);
   });
-
-  marker.addListener('click', function(){
-    infoWindow.open(map, marker);
-  });
-  */
-
-  // Array of markers
-  // let markers = [
-  //   {
-  //     coords: { lat: 42.4668, lng: -70.9495 },
-  //     //  iconImage: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
-  //     content: '<h1>Lynn MA</h1>'
-  //   },
-  //   {
-  //     coords: { lat: 42.8584, lng: -70.9300 },
-  //     content: '<h1>Amesbury MA</h1>'
-  //   },
-  //   {
-  //     coords: { lat: 42.7762, lng: -71.0773 }
-  //   }
-  // ];
-
-  // Loop through markers
-  // for (let i = 0; i < markers.length; i++) {
-  //   // Add marker
-  //   addMarker(markers[i]);
-  // }
-
-  // Add Marker Function
-  // function addMarker(props) {
-  //   let marker = new google.maps.Marker({
-  //     position: props.coords,
-  //     map: map,
-  //     //icon:props.iconImage
-  //   });
-
-  //   // Check for customicon
-  //   if (props.iconImage) {
-  //     // Set icon image
-  //     marker.setIcon(props.iconImage);
-  //   }
-
-  //   // Check content
-  //   if (props.content) {
-  //     let infoWindow = new google.maps.InfoWindow({
-  //       content: props.content
-  //     });
-
-  //     marker.addListener('click', function () {
-  //       infoWindow.open(map, marker);
-  //     });
-  //   }
-  // }
-
 }
 
-function searchPan(){
 
+function mapShowLocationDetails(geocoder, latlng) {
+  geocoder.geocode({ 'location': latlng },
+    function (results, status) {
+      if (status === 'OK') {
+        if (results[0].place_id) {
+          //scrape info window, get place details will be taken from service, do this later
+          //some locations have no data in places api, need to grab from window dom
+          placeId = results[0].place_id;
+          getPlaceData(results[0]);
+          if (windowOpen && results[0]) {
+            getService(placeId);
+            mapMarker.classList.add("btn-primary");
+            mapMarker.classList.remove("btn-danger");
+            addtotravellist.classList.add("btn-primary");
+            mapMarker.disabled = false;
+            addtotravellist.disabled = false;
+            mapMarker.innerHTML = "Mark";
+          } else {
+            mapMarker.classList.remove("btn-danger");
+            mapMarker.classList.remove("btn-primary");
+            addtotravellist.classList.remove("btn-primary");
+            mapMarker.innerHTML = "Mark";
+            mapMarker.disabled = true;
+            addtotravellist.disabled = true;
+          }
+        } else {
+          console.log('No results found');
 
-
-
-    autocomplete.bindTo("bounds", map2);
-
-    infowindow = new google.maps.InfoWindow();
-    infowindowContent = document.getElementById("infoWindowDiv");
-    console.log(infowindowContent);
-
-    const marker = new google.maps.Marker({
-      map2,
-      anchorPoint: new google.maps.Point(0, -29),
-    });
-
-    autocomplete.addListener("place_changed", () => {
-      infowindow.close();
-      marker.setVisible(false);
-
-      const place = autocomplete.getPlace();
-
-      if (!place.geometry || !place.geometry.location) {
-        // User entered the name of a Place that was not suggested and
-        // pressed the Enter key, or the Place Details request failed.
-        window.alert("No details available for input: '" + place.name + "'");
-        return;
-      }
-
-      // If the place has a geometry, then present it on a map.
-      if (place.geometry.viewport) {
-        map2.fitBounds(place.geometry.viewport);
+        }
       } else {
-        map2.setCenter(place.geometry.location);
-        map2.setZoom(12);
+
+        console.log('Geocoder failed due to: ' + status);
+      }
+    })
+}
+
+
+function removeCarouselItems() {
+  while (carouselItemContainer.hasChildNodes()) {
+    carouselItemContainer.removeChild(carouselItemContainer.firstChild);
+  }
+}
+
+
+function collectPhotoUrl(photos) {
+  placePhotos = [];
+  let i = 0;
+  while (i < photos.length) {
+    placePhotos.push(photos[i].getUrl());
+    i++;
+  }
+  changePhotos(placePhotos);
+}
+
+
+function changePhotos(photos) {
+  removeCarouselItems();
+  let i = 0;
+  while (i < photos.length) {
+    let isActive = '';
+    if (i === 1 ? isActive = 'active' : '');
+    carouselItem = `<div class="carousel-item rounded-2 ${isActive}">
+                      <div class="img-fit rounded-2"
+                        style="background-image: url(${photos[i]});">
+                      </div>
+                    </div>`
+    carouselItemContainer.innerHTML += carouselItem;
+    i++;
+  }
+}
+
+
+function getService(placeId) {
+  removeCarouselItems();
+  let request = {
+    placeId: placeId
+  };
+  let carouselItem;
+  service = new google.maps.places.PlacesService(map2);
+  service.getDetails(request, function (place, status) {
+    if (status === google.maps.places.PlacesServiceStatus.OK) {
+      currentPlace = place;
+
+      if (currentPlace.rating) {
+        rating = currentPlace.rating;
+      } else {
+        rating = 0;
+      }
+      if (currentPlace.reviews) {
+        reviews = currentPlace.reviews;
+      } else {
+        reviews = [];
+      }
+      setStarSection(rating, reviews);
+      if (place.photos) {
+        collectPhotoUrl(place.photos);
+      } else {
+        carouselItem = `<div class="carousel-item rounded-2 active">
+        <div class="img-fit rounded-2"
+          style="background-image: url(icons/nophotos.svg);">
+        </div>
+      </div>`
+        carouselItemContainer.innerHTML = carouselItem;
       }
 
-
-      marker.setPosition(place.geometry.location);
-      marker.setVisible(true);
-      //  infowindowContent.children["place-name"].textContent = place.name;
-      //  infowindowContent.children["place-address"].textContent =
-      // place.formatted_address;
-      //   infowindow.open(map2, marker);
-    });
-
-  }
-
-
-
-
-
-
+    } else {
+      console.log("Place not found");
+    }
+  });
+}
 
 window.onload = function () {
   //  window.scrollTo(0, 0);
-
   setTimeout(() => {
-
-  
     try {
       satbtn[0].insertAdjacentElement('beforeend', template);
     } catch {
       initMap();
     }
 
-
-    // setTimeout(() => {
-    //   const opts = {
-    //     fields: ["formatted_address", "geometry", "name"],
-    //     strictBounds: false,
-    //     types: ["establishment"],
-    //   };
-    //   input = document.getElementById("searchInput");
-    //   autocomplete = new google.maps.places.Autocomplete(input, opts);
-    // }, 1000);
-
   }, 2000);
-
 };
 
 
+function closePreviousWindow() {
+  if (document.querySelectorAll('[class="gm-ui-hover-effect"]')[0]) {
+    winClose = document.querySelectorAll('[class="gm-ui-hover-effect"]')[0].click()
+  }
+  windowOpen = false;
+}
+
+MyList.addEventListener('click', () => {
+  mainList.innerHTML = ""
+
+  console.log(bucketList);
+  let accordionConstruct = "";
+
+  let iter = 0;
+  for (let key in bucketList) {
+
+    let addressarr = bucketList[key].ADDRESS.split("|");
 
 
+    console.log(addressarr[0]);
+
+    let addressstr = "";
+    for(let i = 0 ; i<addressarr.length; i++){
+      addressstr+=`<h6>${addressarr[i]}</h6>`;
+    }
+  accordionConstruct = `<div class="accordion-item" id="accordionHead${iter}">
+	<h2 class="accordion-header" id="flush-heading${iter}">
+		<button class="accordion-button collapsed text-dark" type="button"
+			data-bs-toggle="collapse" data-bs-target="#${iter}"
+			aria-expanded="false" aria-controls="${iter}">
+			<h6>${bucketList[key].TITLE}</h6>
+		</button>
+	</h2>
+	<div id="${iter}" class="accordion-collapse collapse"
+		aria-labelledby="${iter}" data-bs-parent="#mainList">
+		<div id="accordionContent" class="accordion-body">${addressstr}
+		</div>
+	</div>
+</div>`
+
+iter++;
+mainList.innerHTML += accordionConstruct;
+
+// if(mainList.innerHTML!=""){
+
+//   mainList.forEach(mainList => {
+//     mainList.addEventListener('click', () => {
+//       mainList.forEach(mainList => {
+//         mainList.classList.remove('active');
+//       });
+//       mainList.classList.add('active');
+//       let activeID = mainList.getAttribute('id');
+//       switch (activeID) {
+//         case 'MyList':
+//           document.getElementById('myListSection').scrollIntoView();
+//           clearInterval(intervalSearch);
+//           break;
+//         case 'Explore':
+//           document.getElementById('exploreSection').scrollIntoView();
+//           if (document.getElementById('searchInput') ? '' : addSearch());
+//           intervalSearch = setInterval(function () {
+//             if (document.getElementById('searchInput') ? '' : addSearch());
+//           }, 2000);
+//           break;
+//         default:
+//           intervalSearch = 2000;
+//       }
+//     });
+//   });
+// }
+
+}
 
 
-
-
-
+});
 
 
