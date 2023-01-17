@@ -7,13 +7,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link defer href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" 
   integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
-  <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="style.css">
 
   <title>Chodae</title>
 </head>
-<body id="body">
-  <div class="section min-vh-100">
-      <div class="container-fluid">
+<body>
+  <div class="container">
+    <!-- ! header nav section ron -- -->
+    <div class="container-fluid">
         <nav class="navbar navbar-expand-lg">
           <a href="http://127.0.0.1:5500/index.html"><img src="icons/chodae.png" height="35"></a>
               </button>
@@ -22,103 +23,49 @@
                       <li class="nav-item"> 
                        </li>
                     </ul>
-                  <button class="btn btn-primary btn-lg text-body">Login</button>                  
-              </div>
-          </nav>  
-      </div>
-
-
-      <div class="section">
-        <h1 id="h1">Your online travel bucketlist</h1> 
+                 </div>
+          </nav> 
+      <div>
+        <h1 id="rtext">Your online travel bucketlist</h1> 
       </div>
             <div>
               <p id="p">The journey of a thousand miles begins with a single step. Explore • Save • Travel</p>
             </div>
                  
-      <div class="section" id="lowerbtn">
-          <button type="button" class="btn btn-primary btn-lg">Sign up</button>
-          <button type="button" class="btn btn-lg" id="btntrans">See samples</button>
+      <div id="lowerbtn0">
+          <button type="button" class="btn btn-primary btn-lg" id="lowerbtn1">Check our App </button>
+          <button type="button" class="btn btn-lg" id="btntrans" id="lowerbtn1"> See samples </button>
        </div>
+       <!-- ! end of header nav section ron -- -->
 
-      <div class="carouselimages" id="caro">
-        <section class="pt-5 pb-5">
-          <div class="container">
-              <div class="row">
-                  <div class="col-12">
-                      <div id="carouselExampleIndicators2" class="carousel slide" data-ride="carousel">
-                          <div class="carousel-inner">
-                              <div class="carousel-item active">
-                                  <div class="row">
-      
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1532781914607-2031eca2f00d?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=7c625ea379640da3ef2e24f20df7ce8d">
-                                              <div class="card-body">      
-                                              </div>
-      
-                                          </div>
-                                      </div>
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1517760444937-f6397edcbbcd?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=42b2d9ae6feb9c4ff98b9133addfb698">
-                                              <div class="card-body">                                               
-                                              </div>
-                                          </div>
-                                      </div>
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1532712938310-34cb3982ef74?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=3d2e8a2039c06dd26db977fe6ac6186a">
-                                              <div class="card-body">      
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              </div>
-                              <div class="carousel-item">
-                                  <div class="row">
-      
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1532771098148-525cefe10c23?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=3f317c1f7a16116dec454fbc267dd8e4">
-                                              <div class="card-body">
-                                              </div>      
-                                          </div>
-                                      </div>
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1532715088550-62f09305f765?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=ebadb044b374504ef8e81bdec4d0e840">
-                                              <div class="card-body">
-                                              </div>
-                                          </div>
-                                      </div>
-                                      <div class="col-md-3 mb-3">
-                                          <div class="card">
-                                              <img class="img-fluid" alt="100%x280" src="https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?ixlib=rb-0.3.5&amp;q=80&amp;fm=jpg&amp;crop=entropy&amp;cs=tinysrgb&amp;w=1080&amp;fit=max&amp;ixid=eyJhcHBfaWQiOjMyMDc0fQ&amp;s=0754ab085804ae8a3b562548e6b4aa2e">
-                                              <div class="card-body">                                                
-                                              </div>
-                                          </div>
-                                      </div>
-      
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-          <div class="col-6">
-            <h2 id="p2">Your Travel <br> Bucketlist, Available <br> Anytime & <br> Anywhere.</h2>
-          </div>
-          <div class="col-6 text-right" id="btn2">
-              <a class="btn btn-primary mb-3 mr-1" href="#carouselExampleIndicators2" role="button" data-slide="prev">
-                  <i class="fa fa-arrow-left"></i>
-              </a>
-              <a class="btn btn-primary mb-3 " href="#carouselExampleIndicators2" role="button" data-slide="next">
-                  <i class="fa fa-arrow-right"></i>
-              </a>
-          </div>
-      </section>
-      </div>
-  </div>               
-</body>
+
+        <!-- ! Explore • Save • Travel section ron -- -->
+       <div class="section" id="section1">
+    <div class="text">
+   <h5 id="vacation"> <a href=""> Create an account now </a></h5>
+   <h1 id="vacation">Explore • Save • Travel</h1>
+   <h3 id="vacation">Vacation Made Easy</h3>
+   <p id="vacation">Explore new places in the map.<br> 
+     Save them on your bucketlist so you never forget them.<br>Travel! have fun and enjoy life.</p>
+    </div>
+     <img src="icons/1.png" alt="" id="cpimg2">          
+    </div>
+    <!-- ! end Explore • Save • Travel section ron -- -->
+
+
+
+    <!-- ! marquee section ron -- -->
+    <div class="marquee" id="marquee1">
+        <h2>Top Spots In Your Area</h2>
+        <P>See where others have been</P>
+    </div>
+  </div>
+  <marquee behavior="" direction="">
+    <img src="icons/1.png" alt="" id="marquee2">
+    <img src="icons/1.png" alt="" id="marquee2">
+    <img src="icons/1.png" alt="" id="marquee2">
+    <img src="icons/1.png" alt="" id="marquee2">
+  </marquee>
+  <!-- ! end of marquee section ron -- -->
+    </body>
 </html>
